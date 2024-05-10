@@ -1,0 +1,8 @@
+collections:
+  - ansible.posix
+  - community.general
+# roles:
+#   - linux-system-roles.storage
+#   - linux-system-roles.timesync
+#   - src: geerlingguy.haproxy
+#     name: haproxy-role
