@@ -10,6 +10,7 @@
         state: "{{ 'present' if (not 'auto' in network_interfaces[interface_name] or network_interfaces[interface_name].auto == true) else 'absent' }}"
         insertbefore: "^iface {{ interface_name }}"
     - name: Configure {{ interface_name }} net interface to connect the host to VM hosts
+      notify: Reload networking
       community.general.interfaces_file:
         dest: /etc/network/interfaces.d/{{ interface_name }}.cfg
         iface: "{{ interface_name }}"
@@ -23,6 +24,11 @@
           post-up: iptables -t nat -A POSTROUTING -s '192.168.5.0/24' -o eno1 -j MASQUERADE
           post-down: iptables -t nat -D POSTROUTING -s '192.168.5.0/24' -o eno1 -j MASQUERADE
         state: present
+  handlers:
+    - name: Reload networking
+      ansible.builtin.service:
+        name: networking
+        state: restarted
 
 # auto vmbr4
 # iface vmbr4 inet static
