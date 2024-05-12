@@ -4,26 +4,31 @@
   tasks:
     - name: Configure network interface auto vmbr0
       notify: Reload networking
-      ansible.builtin.lineinfile:
-        path: /etc/network/interfaces
-        line: "auto {{ interface_name }}"
-        state: "{{ 'present' if (not 'auto' in network_interfaces[interface_name] or network_interfaces[interface_name].auto == true) else 'absent' }}"
-        insertbefore: "^iface {{ interface_name }}"
-    - name: Configure {{ interface_name }} net interface to connect the host to VM hosts
+      ansible.builtin.copy:
+        dest: /etc/network/interfaces.d/{{ interface_name }}.cfg
+        content: |
+          auto {{ interface_name }}
+          iface {{ interface_name }} inet static
+    - name: Configure "{{ interface_name }}" net interface to connect the host to VM hosts
       notify: Reload networking
       community.general.interfaces_file:
-        dest: /etc/network/interfaces.d/{{ interface_name }}.cfg
+        dest: "/etc/network/interfaces.d/{{ interface_name }}.cfg"
         iface: "{{ interface_name }}"
-        option:
-          address_family: inet
-          method: static
-          address: 192.168.5.1/24
-          bridge-fd: 0
-          bridge-stp: off
-          bridge-ports: none
-          post-up: iptables -t nat -A POSTROUTING -s '192.168.5.0/24' -o eno1 -j MASQUERADE
-          post-down: iptables -t nat -D POSTROUTING -s '192.168.5.0/24' -o eno1 -j MASQUERADE
-        state: present
+        option: "{{ item.option }}"
+        value: "{{ item.value  }}"
+      loop:
+        - option: address
+          value: "192.168.5.1/24"
+        - option: bridge-ports
+          value: "none"
+        - option: bridge-stp
+          value: "off"
+        - option: bridge-fd
+          value: "0"
+        - option: post-up
+          value: "iptables -t nat -A POSTROUTING -s '192.168.5.0/24' -o eno1 -j MASQUERADE"
+        - option: post-down
+          value: "iptables -t nat -D POSTROUTING -s '192.168.5.0/24' -o eno1 -j MASQUERADE"
   handlers:
     - name: Reload networking
       ansible.builtin.service:

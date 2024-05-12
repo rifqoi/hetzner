@@ -1,2 +1,2 @@
 [master]
-localhost
+proxmox-srv ansible_port=9922
