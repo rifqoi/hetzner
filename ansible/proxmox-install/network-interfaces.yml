@@ -1,0 +1,35 @@
+- hosts: master
+  vars:
+    interface_name: vmbr0
+  tasks:
+    - name: Configure network interface auto vmbr0
+      notify: Reload networking
+      ansible.builtin.lineinfile:
+        path: /etc/network/interfaces
+        line: "auto {{ interface_name }}"
+        state: "{{ 'present' if (not 'auto' in network_interfaces[interface_name] or network_interfaces[interface_name].auto == true) else 'absent' }}"
+        insertbefore: "^iface {{ interface_name }}"
+    - name: Configure {{ interface_name }} net interface to connect the host to VM hosts
+      community.general.interfaces_file:
+        dest: /etc/network/interfaces.d/{{ interface_name }}.cfg
+        iface: "{{ interface_name }}"
+        option:
+          address_family: inet
+          method: static
+          address: 192.168.5.1/24
+          bridge-fd: 0
+          bridge-stp: off
+          bridge-ports: none
+          post-up: iptables -t nat -A POSTROUTING -s '192.168.5.0/24' -o eno1 -j MASQUERADE
+          post-down: iptables -t nat -D POSTROUTING -s '192.168.5.0/24' -o eno1 -j MASQUERADE
+        state: present
+
+# auto vmbr4
+# iface vmbr4 inet static
+#         address 192.168.5.1/24
+#         bridge-ports none
+#         bridge-stp off
+#         bridge-fd 0
+#         post-up iptables -t nat -A POSTROUTING -s '192.168.5.0/24' -o eno1 -j MASQUERADE
+#         post-down iptables -t nat -D POSTROUTING -s '192.168.5.0/24' -o eno1 -j MASQUERADE
+# #NAT/Masq
