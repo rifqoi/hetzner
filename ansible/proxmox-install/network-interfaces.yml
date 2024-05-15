@@ -5,14 +5,14 @@
     - name: Configure network interface auto vmbr0
       notify: Reload networking
       ansible.builtin.copy:
-        dest: /etc/network/interfaces.d/{{ interface_name }}.cfg
+        dest: /etc/network/interfaces.d/{{ interface_name }}
         content: |
           auto {{ interface_name }}
           iface {{ interface_name }} inet static
     - name: Configure "{{ interface_name }}" net interface to connect the host to VM hosts
       notify: Reload networking
       community.general.interfaces_file:
-        dest: "/etc/network/interfaces.d/{{ interface_name }}.cfg"
+        dest: "/etc/network/interfaces.d/{{ interface_name }}"
         iface: "{{ interface_name }}"
         option: "{{ item.option }}"
         value: "{{ item.value  }}"
